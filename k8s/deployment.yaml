@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biocad-test
+  namespace: default
+  labels:
+    app: biocad-test
+    version: v1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: biocad-test
+  strategy:                             
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: biocad-test
+    spec:
+      containers:
+      - name: app
+        image: ere15/biocad-test:v0.1.0
+        imagePullPolicy: Always
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 32777
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 32777
+          initialDelaySeconds: 15
+          periodSeconds: 30
+        ports:
+        - containerPort: 32777           
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+      volumes:
+      - name: data
+        emptyDir: {}
+      restartPolicy: Always
